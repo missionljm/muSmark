@@ -1,0 +1,19 @@
+
+# 默认的数据库名
+database:
+  name: mu_smart
+
+spring:
+  application:
+    name: Mu-Smart
+    version: 1.0.0
+  data:
+    redis:
+      port: 6379
+      lost: localhost
+      password:
+  datasource:
+    url: jdbc:mysql://localhost:3306/${database.name}?useUnicode=true&allowPublicKeyRetrieval=true&autoReconnect=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123321
+

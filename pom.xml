@@ -31,11 +31,40 @@
         <mybaits-plus.version>3.5.3.1</mybaits-plus.version>
         <redis.version>2.7.1</redis.version>
         <jwt.version>4.4.0</jwt.version>
+        <guava.version>31.1-jre</guava.version>
+        <commons-lang3.version>3.12.0</commons-lang3.version>
+        <qrcode-plugin.version>3.0.0</qrcode-plugin.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons-lang3.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-all</artifactId>
+            <version>0.62.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.liuyueyi.media</groupId>
+            <artifactId>qrcode-plugin</artifactId>
+            <version>${qrcode-plugin.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.lionsoul</groupId>
+            <artifactId>ip2region</artifactId>
+            <version>2.6.6</version>
         </dependency>
 
         <dependency>
@@ -85,11 +114,29 @@
             <artifactId>java-jwt</artifactId>
             <version>${jwt.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>5.3.21</version>
+        </dependency>
         <!-- swagger -->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
             <artifactId>knife4j-openapi2-spring-boot-starter</artifactId>
             <version>4.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>transmittable-thread-local</artifactId>
+            <version>2.14.5</version>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>

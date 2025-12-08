@@ -17,3 +17,9 @@ spring:
     username: root
     password: 123321
 
+# 系统jwt校验
+muSmart:
+  jwt:
+    issuer: muSmart
+    secret: 123321muSmart@google.com
+    expiration: 259200000

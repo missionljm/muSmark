@@ -9,6 +9,8 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.mu.musmart.cache.RedisClient;
+import com.mu.musmart.enums.common.StatusEnum;
+import com.mu.musmart.exception.ExceptionUtil;
 import com.mu.musmart.mdc.SelfTraceIdGenerator;
 import com.mu.musmart.util.JsonUtil;
 import com.mu.musmart.util.MapUtils;
@@ -30,7 +32,7 @@ public class UserSessionHelper {
 
     @Component
     @Data
-    @ConfigurationProperties("muSmart.jwt")
+    @ConfigurationProperties("musmart.jwt")
     public static class JwtProperties {
         /**
          * 签发人
@@ -64,6 +66,12 @@ public class UserSessionHelper {
      * @return
      */
     public String getSession(Long userId){
+        if (jwtProperties.getExpire() == null) {
+            throw ExceptionUtil.of(StatusEnum.UNEXPECT_ERROR , "请配置jwt.expire参数");
+        }
+        if (jwtProperties.getIssuer() == null) {
+            throw ExceptionUtil.of(StatusEnum.UNEXPECT_ERROR , "请配置jwt.issuer参数");
+        }
         String session = JsonUtil.toStr(MapUtils.create("s" , SelfTraceIdGenerator.generate() , "v" , userId));
         String token = JWT.create().withIssuer(jwtProperties.getIssuer()).withExpiresAt(new Date(System.currentTimeMillis() + jwtProperties.getExpire()))
                 .withPayload(session)

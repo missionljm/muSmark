@@ -1,6 +1,7 @@
 package com.mu.musmart.exception;
 
-import com.yonyou.beisendemo.vo.constants.StatusEnum;
+
+import com.mu.musmart.enums.common.StatusEnum;
 
 public class ExceptionUtil {
 

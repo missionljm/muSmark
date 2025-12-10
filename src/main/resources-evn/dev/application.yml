@@ -18,8 +18,13 @@ spring:
     password: 123321
 
 # 系统jwt校验
-muSmart:
+musmart:
   jwt:
     issuer: muSmart
     secret: 123321muSmart@google.com
-    expiration: 259200000
+    expire: 259200000
+
+log:
+  path: logs
+env:
+  name: dev

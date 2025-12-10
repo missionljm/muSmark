@@ -13,13 +13,13 @@ public class EnvUtil {
         DEV("dev", false),
         TEST("test", false),
         PRE("pre", false),
-        PROD("prod", true);
+        PROD("pro", true);
         private String env;
-        private boolean prod;
+        private boolean pro;
 
-        EnvEnum(String env, boolean prod) {
+        EnvEnum(String env, boolean pro) {
             this.env = env;
-            this.prod = prod;
+            this.pro = pro;
         }
 
         public static EnvEnum nameOf(String name) {
@@ -33,7 +33,7 @@ public class EnvUtil {
     }
 
     public static boolean isPro() {
-        return getEnv().prod;
+        return getEnv().pro;
     }
 
     public static EnvEnum getEnv() {

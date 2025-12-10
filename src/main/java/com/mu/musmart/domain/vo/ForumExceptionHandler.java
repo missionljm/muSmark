@@ -6,8 +6,7 @@ import com.mu.musmart.context.ReqInfoContext;
 import com.mu.musmart.enums.common.StatusEnum;
 import com.mu.musmart.exception.ForumException;
 import com.mu.musmart.util.JsonUtil;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.core.NestedRuntimeException;
@@ -21,14 +20,16 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
  * 全局异常处理
  * fixme: 除了这种姿势之外，还可以使用 ControllerAdvice 注解方式
  *
- * @author YiHui
- * @date 2022/9/3
+ * @author Lijinmu
+ * @date 2025/9/3
  */
 @Slf4j
 @Order(-100)
@@ -110,11 +111,15 @@ public class ForumExceptionHandler implements HandlerExceptionResolver {
      * @return
      */
     private boolean restResponse(HttpServletRequest request, HttpServletResponse response) {
-        if (request.getRequestURI().startsWith("/api/admin/") || request.getRequestURI().startsWith("/admin/")) {
+//        if (request.getRequestURI().startsWith("/api/admin/") || request.getRequestURI().startsWith("/admin/")) {
+//            return true;
+//        }
+
+        if (request.getRequestURI().startsWith("/image/upload")) {
             return true;
         }
 
-        if (request.getRequestURI().startsWith("/image/upload")) {
+        if (request.getRequestURI().startsWith("/commonLogin-Api/")){
             return true;
         }
 

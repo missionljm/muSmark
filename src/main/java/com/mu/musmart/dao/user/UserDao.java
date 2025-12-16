@@ -16,7 +16,7 @@ public class UserDao extends ServiceImpl<UserMapper,UserDO> {
     @Autowired
     private UserMapper userMapper;
 
-    public UserDO getUserById(Integer id){
+    public UserDO getUserById(Long id){
         return userMapper.selectById(id);
     }
 

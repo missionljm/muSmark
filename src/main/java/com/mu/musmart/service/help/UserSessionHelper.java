@@ -21,6 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Base64Utils;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 用户登录JWT核心类
@@ -96,9 +98,9 @@ public class UserSessionHelper {
     public Long getUserIdBySession(String session){
         try {
             DecodedJWT decodedJWT = verifier.verify(session);
-            String userId = String.valueOf(Base64Utils.decodeFromString(decodedJWT.getPayload()));
-
-            String user = RedisClient.getStr(userId);
+            String pay = new String(Base64Utils.decodeFromString(decodedJWT.getPayload()));
+            String userId = JsonUtil.toObj(pay , HashMap.class).get("v").toString();
+            String user = RedisClient.getStr(session);
             if (StrUtil.isEmpty(user) || !StrUtil.equals(userId , user)){
                 return null;
             }

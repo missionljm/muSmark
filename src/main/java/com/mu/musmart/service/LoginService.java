@@ -42,4 +42,6 @@ public interface LoginService {
      */
     String loginByUserPwd(Map loginPar);
 
+    Boolean verifyUser(String account);
+
 }

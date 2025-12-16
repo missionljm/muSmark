@@ -51,4 +51,9 @@ public class LoginServiceImpl implements LoginService {
             throw ExceptionUtil.of(StatusEnum.USER_NOT_EXISTS);
         }
     }
+
+    @Override
+    public Boolean verifyUser(String account) {
+        return ObjectUtil.isEmpty(userDao.getUserByUserAccount(account)) ? true : false;
+    }
 }

@@ -1,7 +1,12 @@
 package com.mu.musmart.service;
 
+import cn.hutool.core.util.StrUtil;
+import com.mu.musmart.cache.RedisClient;
 import com.mu.musmart.context.ReqInfoContext;
 import com.mu.musmart.domain.dto.user.BaseUserInfoDTO;
+import com.mu.musmart.enums.common.StatusEnum;
+import com.mu.musmart.exception.ExceptionUtil;
+import com.mu.musmart.exception.ForumAdviceException;
 import com.mu.musmart.service.user.UserService;
 import com.mu.musmart.util.SessionUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -103,6 +108,9 @@ public class GlobalInitService {
     }
 
     public void initLoginUser(String session, ReqInfoContext.ReqInfo reqInfo) {
+        if (StrUtil.isEmpty(RedisClient.getStr(session))){
+            throw ExceptionUtil.of(StatusEnum.USER_EXISTS , "请重新登录");
+        }
         BaseUserInfoDTO user = userService.getAndUpdateUserIpInfoBySessionId(session, null);
         if (user != null) {
             reqInfo.setSession(session);

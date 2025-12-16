@@ -5,6 +5,8 @@ import cn.hutool.json.JSONUtil;
 import com.mu.musmart.context.ReqInfoContext;
 import com.mu.musmart.domain.vo.ResVo;
 import com.mu.musmart.enums.common.StatusEnum;
+import com.mu.musmart.exception.ExceptionUtil;
+import com.mu.musmart.exception.ForumException;
 import com.mu.musmart.mdc.MdcUtil;
 import com.mu.musmart.service.GlobalInitService;
 import com.mu.musmart.service.LoginService;
@@ -56,25 +58,38 @@ public class LoginFilter implements Filter {
         }
         StopWatch stopWatch = new StopWatch("请求耗时");
         //放过登录页面
-        if (!req.getRequestURI().contains("/login")){
             try {
+                if (req.getRequestURI().contains("/login")
+                || req.getRequestURI().contains("/getVerificationCode")){
+                    filterChain.doFilter(req, servletResponse);
+                    return;
+                }
                 if (req.getCookies() == null){
                     HttpServletResponse httpResponse = (HttpServletResponse) servletResponse;
                     httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401状态码
                     httpResponse.setContentType("application/json;charset=utf-8");
                     httpResponse.getWriter().write(JSONUtil.toJsonStr(ResVo.fail(StatusEnum.FORBID_NOTLOGIN , StatusEnum.FORBID_NOTLOGIN.getMsg())));
-                    return;
                 }else {
                     stopWatch.start("请求参数构建");
+                    req.getCookies();
                     HttpServletRequest reqSec = this.initReqInfo((HttpServletRequest) servletRequest, (HttpServletResponse) servletResponse);
                     stopWatch.stop();
                     stopWatch.start("跨域请求");
                     CrossUtil.buildCors(reqSec , (HttpServletResponse) servletResponse);
-                    filterChain.doFilter(reqSec, servletResponse);
-                    return;
+                    req = reqSec;
                 }
+                filterChain.doFilter(req, servletResponse);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                HttpServletResponse httpResponse = (HttpServletResponse) servletResponse;
+                httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500状态码
+                httpResponse.setContentType("application/json;charset=utf-8");
+                String message ;
+                if (e instanceof ForumException){
+                    message = ((ForumException) e).getStatus().getMsg();
+                }else {
+                    message = e.getMessage();
+                }
+                httpResponse.getWriter().write(JSONUtil.toJsonStr(ResVo.fail(StatusEnum.UNEXPECT_ERROR , message)));
             }finally {
                 if (stopWatch.isRunning()) {
                     // 避免doFitler执行异常，导致上面的 stopWatch无法结束，这里先首当结束一下上次的计数
@@ -91,8 +106,6 @@ public class LoginFilter implements Filter {
                     log.info("{} - cost:\n{}", req.getRequestURI(), stopWatch.prettyPrint(TimeUnit.MILLISECONDS));
                 }
             }
-        }
-        filterChain.doFilter(req, servletResponse);
     }
 
     private HttpServletRequest initReqInfo(HttpServletRequest request, HttpServletResponse response) {
@@ -142,8 +155,6 @@ public class LoginFilter implements Filter {
             // 返回头中记录traceId
             response.setHeader(GLOBAL_TRACE_ID_HEADER, Optional.ofNullable(MdcUtil.getTraceId()).orElse(""));
             stopWatch.stop();
-        } catch (Exception e) {
-            log.error("init reqInfo error!", e);
         } finally {
             if (!EnvUtil.isPro()) {
                 log.info("{} -> 请求构建耗时: \n{}", request.getRequestURI(), stopWatch.prettyPrint(TimeUnit.MILLISECONDS));

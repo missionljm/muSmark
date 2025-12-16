@@ -69,6 +69,7 @@ public enum StatusEnum {
     LOGIN_FAILED_MIXED(400_403_001, "登录失败:%s"),
     USER_NOT_EXISTS(400_404_001, "用户不存在:%s"),
     USER_EXISTS(400_404_002, "用户已存在:%s"),
+    USER_EXPEIRED(400_500_003, "用户登录已过期:%s"),
     // 用户登录名重复
     USER_LOGIN_NAME_REPEAT(400_404_003, "用户登录名重复:%s"),
     // 待审核

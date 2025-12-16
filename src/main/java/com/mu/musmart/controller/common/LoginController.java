@@ -20,6 +20,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.awt.*;
 import java.util.Map;
 
 @RestController
@@ -47,12 +48,11 @@ public class LoginController {
             return ResVo.fail(StatusEnum.UNEXPECT_ERROR , "账号不存在，请联系管理员");
         }
         CircleCaptcha lineCaptcha =  CaptchaUtil.createCircleCaptcha(200 , 100 );
-        lineCaptcha.createImage("ATAX");
         String verificationCode = lineCaptcha.getImageBase64();
+        lineCaptcha.setBackground(Color.BLACK);
         String code = lineCaptcha.getCode();
         RedisClient.setStr(userAccount , code);
         RedisClient.expire(userAccount , Long.valueOf(60 * 1000));
-
         return ResVo.ok(verificationCode);
     }
 

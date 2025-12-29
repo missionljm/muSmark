@@ -38,6 +38,7 @@ public class LoginServiceImpl implements LoginService {
         // 获取账号密码
         Optional<String> username = Optional.ofNullable(loginPar.get("username")).map(Object::toString);
         Optional<String> password = Optional.ofNullable(loginPar.get("password")).map(Object::toString);
+        Optional<String> yzm = Optional.ofNullable(loginPar.get("verifyCode")).map(Object::toString);
         UserDO userDo = userDao.getUserByUserAccount(username.get());
         // 判断用户是否存在
         if (ObjectUtil.isNotEmpty(userDo)){

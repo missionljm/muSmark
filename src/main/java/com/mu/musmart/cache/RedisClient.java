@@ -3,6 +3,8 @@ package com.mu.musmart.cache;
 import com.google.common.collect.Maps;
 import com.mu.musmart.util.JsonUtil;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisZSetCommands;
@@ -24,10 +26,16 @@ import java.util.stream.IntStream;
 public class RedisClient {
     private static final Charset CODE = StandardCharsets.UTF_8;
     private static final String KEY_PREFIX = "muSmart_";
+    private static final Logger log = LoggerFactory.getLogger(RedisClient.class);
     private static RedisTemplate<String, String> template;
 
     public static void register(RedisTemplate<String, String> template) {
+        log.info("redis init");
         RedisClient.template = template;
+    }
+
+    public static boolean isTemplateAvailable() {
+        return template != null;
     }
 
     public static void nullCheck(Object... args) {
@@ -92,6 +100,9 @@ public class RedisClient {
      * @return
      */
     public static String getStr(String key) {
+        if (template == null) {
+            return null; // RedisTemplate未初始化，返回null
+        }
         return template.execute((RedisCallback<String>) con -> {
             byte[] val = con.get(keyBytes(key));
             return val == null ? null : new String(val);
@@ -105,6 +116,10 @@ public class RedisClient {
      * @param value
      */
     public static void setStr(String key, String value) {
+        if (template == null) {
+            // RedisTemplate未初始化，跳过操作
+            return;
+        }
         template.execute((RedisCallback<Void>) con -> {
             con.set(keyBytes(key), valBytes(value));
             return null;
@@ -117,6 +132,10 @@ public class RedisClient {
      * @param key
      */
     public static void del(String key) {
+        if (template == null) {
+            // RedisTemplate未初始化，跳过操作
+            return;
+        }
         template.execute((RedisCallback<Long>) con -> con.del(keyBytes(key)));
     }
 
@@ -424,6 +443,72 @@ public class RedisClient {
                 return null;
             }
         });
+    }
+
+    // ZSet 相关操作 - 用于延迟队列
+    public static <T> Boolean zAdd(String key, T value, double score) {
+        if (template == null) {
+            return false; // RedisTemplate未初始化，返回false
+        }
+        return template.execute(new RedisCallback<Boolean>() {
+            @Override
+            public Boolean doInRedis(RedisConnection connection) throws DataAccessException {
+                return connection.zAdd(keyBytes(key), score, valBytes(value));
+            }
+        });
+    }
+
+    public static <T> Set<T> zRangeByScore(String key, double min, double max, Class<T> clz) {
+        return template.execute((RedisCallback<Set<T>>) con -> {
+            Set<byte[]> set = con.zRangeByScore(keyBytes(key), min, max);
+            if (CollectionUtils.isEmpty(set)) {
+                return Collections.emptySet();
+            }
+            return set.stream().map(s -> toObj(s, clz)).collect(Collectors.toSet());
+        });
+    }
+
+    public static <T> Set<T> zRangeWithScores(String key, long start, long end, Class<T> clz) {
+        return template.execute((RedisCallback<Set<T>>) con -> {
+            Set<RedisZSetCommands.Tuple> tuples = con.zRangeWithScores(keyBytes(key), start, end);
+            if (CollectionUtils.isEmpty(tuples)) {
+                return Collections.emptySet();
+            }
+            return tuples.stream().map(tuple -> toObj(tuple.getValue(), clz)).collect(Collectors.toSet());
+        });
+    }
+
+    public static Long zRem(String key, String... values) {
+        if (template == null) {
+            return 0L; // RedisTemplate未初始化，返回0
+        }
+        return template.execute(new RedisCallback<Long>() {
+            @Override
+            public Long doInRedis(RedisConnection connection) throws DataAccessException {
+                byte[][] vals = new byte[values.length][];
+                for (int i = 0; i < values.length; i++) {
+                    vals[i] = valBytes(values[i]);
+                }
+                return connection.zRem(keyBytes(key), vals);
+            }
+        });
+    }
+
+    public static Set<String> zRangeByScoreForString(String key, double min, double max) {
+        if (template == null) {
+            return Collections.emptySet(); // RedisTemplate未初始化，返回空集合
+        }
+        return template.execute((RedisCallback<Set<String>>) con -> {
+            Set<byte[]> set = con.zRangeByScore(keyBytes(key), min, max);
+            if (CollectionUtils.isEmpty(set)) {
+                return Collections.emptySet();
+            }
+            return set.stream().map(s -> new String(s, CODE)).collect(Collectors.toSet());
+        });
+    }
+
+    public static Long zCard(String key) {
+        return template.execute((RedisCallback<Long>) con -> con.zCard(keyBytes(key)));
     }
 
     private static <T> T toObj(byte[] ans, Class<T> clz) {

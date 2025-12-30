@@ -27,8 +27,6 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class GlobalInitService {
-    @Value("${env.name}")
-    private String env;
     @Autowired
     private UserService userService;
 

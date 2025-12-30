@@ -2,20 +2,16 @@ package com.mu.musmart.cache;
 
 import com.google.common.collect.Maps;
 import com.mu.musmart.util.JsonUtil;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.connection.RedisZSetCommands;
-import org.springframework.data.redis.core.RedisCallback;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.util.CollectionUtils;
+import org.redisson.api.*;
+import org.redisson.client.codec.StringCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * @author YiHui
@@ -24,10 +20,16 @@ import java.util.stream.IntStream;
 public class RedisClient {
     private static final Charset CODE = StandardCharsets.UTF_8;
     private static final String KEY_PREFIX = "muSmart_";
-    private static RedisTemplate<String, String> template;
+    private static final Logger log = LoggerFactory.getLogger(RedisClient.class);
+    private static RedissonClient redissonClient;
 
-    public static void register(RedisTemplate<String, String> template) {
-        RedisClient.template = template;
+    public static void register(RedissonClient redissonClient) {
+        log.info("redis init");
+        RedisClient.redissonClient = redissonClient;
+    }
+
+    public static boolean isRedissonAvailable() {
+        return redissonClient != null;
     }
 
     public static void nullCheck(Object... args) {
@@ -45,12 +47,11 @@ public class RedisClient {
      * @param <T>
      * @return
      */
-    public static <T> byte[] valBytes(T val) {
-
+    public static <T> String serialize(T val) {
         if (val instanceof String) {
-            return ((String) val).getBytes(CODE);
+            return (String) val;
         } else {
-            return JsonUtil.toStr(val).getBytes(CODE);
+            return JsonUtil.toStr(val);
         }
     }
 
@@ -60,19 +61,9 @@ public class RedisClient {
      * @param key
      * @return
      */
-    public static byte[] keyBytes(String key) {
+    public static String generateKey(String key) {
         nullCheck(key);
-        key = KEY_PREFIX + key;
-        return key.getBytes(CODE);
-    }
-
-    public static byte[][] keyBytes(List<String> keys) {
-        byte[][] bytes = new byte[keys.size()][];
-        int index = 0;
-        for (String key : keys) {
-            bytes[index++] = keyBytes(key);
-        }
-        return bytes;
+        return KEY_PREFIX + key;
     }
 
     /**
@@ -82,7 +73,11 @@ public class RedisClient {
      * @return
      */
     public static Long ttl(String key) {
-        return template.execute((RedisCallback<Long>) con -> con.ttl(keyBytes(key)));
+        if (redissonClient == null) {
+            return null;
+        }
+        RBucket<String> bucket = redissonClient.getBucket(generateKey(key), StringCodec.INSTANCE);
+        return bucket.remainTimeToLive();
     }
 
     /**
@@ -92,10 +87,11 @@ public class RedisClient {
      * @return
      */
     public static String getStr(String key) {
-        return template.execute((RedisCallback<String>) con -> {
-            byte[] val = con.get(keyBytes(key));
-            return val == null ? null : new String(val);
-        });
+        if (redissonClient == null) {
+            return null; // RedissonClient未初始化，返回null
+        }
+        RBucket<String> bucket = redissonClient.getBucket(generateKey(key), StringCodec.INSTANCE);
+        return bucket.get();
     }
 
     /**
@@ -105,19 +101,27 @@ public class RedisClient {
      * @param value
      */
     public static void setStr(String key, String value) {
-        template.execute((RedisCallback<Void>) con -> {
-            con.set(keyBytes(key), valBytes(value));
-            return null;
-        });
+        if (redissonClient == null) {
+            // RedissonClient未初始化，跳过操作
+            return;
+        }
+        RBucket<String> bucket = redissonClient.getBucket(generateKey(key), StringCodec.INSTANCE);
+        bucket.set(value);
     }
 
     /**
      * 删除缓存
      *
      * @param key
+     * @return
      */
     public static void del(String key) {
-        template.execute((RedisCallback<Long>) con -> con.del(keyBytes(key)));
+        if (redissonClient == null) {
+            // RedissonClient未初始化，跳过操作
+            return;
+        }
+        RBucket<String> bucket = redissonClient.getBucket(generateKey(key), StringCodec.INSTANCE);
+        bucket.delete();
     }
 
     /**
@@ -127,10 +131,11 @@ public class RedisClient {
      * @param expire 有效期，s为单位
      */
     public static void expire(String key, Long expire) {
-        template.execute((RedisCallback<Void>) connection -> {
-            connection.expire(keyBytes(key), expire);
-            return null;
-        });
+        if (redissonClient == null) {
+            return;
+        }
+        RBucket<String> bucket = redissonClient.getBucket(generateKey(key), StringCodec.INSTANCE);
+        bucket.expire(java.time.Duration.ofSeconds(expire));
     }
 
     /**
@@ -142,96 +147,101 @@ public class RedisClient {
      * @return
      */
     public static Boolean setStrWithExpire(String key, String value, Long expire) {
-        return template.execute(new RedisCallback<Boolean>() {
-            @Override
-            public Boolean doInRedis(RedisConnection redisConnection) throws DataAccessException {
-                return redisConnection.setEx(keyBytes(key), expire, valBytes(value));
-            }
-        });
+        if (redissonClient == null) {
+            return false;
+        }
+        RBucket<String> bucket = redissonClient.getBucket(generateKey(key), StringCodec.INSTANCE);
+        return bucket.trySet(value, expire, TimeUnit.SECONDS);
     }
 
     public static <T> Map<String, T> hGetAll(String key, Class<T> clz) {
-        Map<byte[], byte[]> records = template.execute((RedisCallback<Map<byte[], byte[]>>) con -> con.hGetAll(keyBytes(key)));
-        if (records == null) {
+        if (redissonClient == null) {
+            return Collections.emptyMap();
+        }
+        RMap<String, String> map = redissonClient.getMap(generateKey(key), StringCodec.INSTANCE);
+        Map<String, String> entries = map.readAllMap();
+        if (entries == null) {
             return Collections.emptyMap();
         }
 
-        Map<String, T> result = Maps.newHashMapWithExpectedSize(records.size());
-        for (Map.Entry<byte[], byte[]> entry : records.entrySet()) {
+        Map<String, T> result = Maps.newHashMapWithExpectedSize(entries.size());
+        for (Map.Entry<String, String> entry : entries.entrySet()) {
             if (entry.getKey() == null) {
                 continue;
             }
-
-            result.put(new String(entry.getKey()), toObj(entry.getValue(), clz));
+            result.put(entry.getKey(), toObj(entry.getValue(), clz));
         }
         return result;
     }
 
     public static <T> T hGet(String key, String field, Class<T> clz) {
-        return template.execute((RedisCallback<T>) con -> {
-            byte[] records = con.hGet(keyBytes(key), valBytes(field));
-            if (records == null) {
-                return null;
-            }
-            return toObj(records, clz);
-        });
+        if (redissonClient == null) {
+            return null;
+        }
+        RMap<String, String> map = redissonClient.getMap(generateKey(key), StringCodec.INSTANCE);
+        String value = map.get(field);
+        return toObj(value, clz);
     }
 
     /**
      * 自增
      *
      * @param key
-     * @param filed
+     * @param field
      * @param cnt
      * @return
      */
-    public static Long hIncr(String key, String filed, Integer cnt) {
-        return template.execute((RedisCallback<Long>) con -> con.hIncrBy(keyBytes(key), valBytes(filed), cnt));
+    public static Long hIncr(String key, String field, Integer cnt) {
+        if (redissonClient == null) {
+            return 0L;
+        }
+        RMap<String, String> map = redissonClient.getMap(generateKey(key), StringCodec.INSTANCE);
+        Long value = Long.valueOf(map.addAndGet(field, cnt));
+        return value;
     }
 
     public static <T> Boolean hDel(String key, String field) {
-        return template.execute(new RedisCallback<Boolean>() {
-            @Override
-            public Boolean doInRedis(RedisConnection connection) throws DataAccessException {
-                return connection.hDel(keyBytes(key), valBytes(field)) > 0;
-            }
-        });
+        if (redissonClient == null) {
+            return false;
+        }
+        RMap<String, String> map = redissonClient.getMap(generateKey(key), StringCodec.INSTANCE);
+        return map.remove(field) != null;
     }
 
     public static <T> Boolean hSet(String key, String field, T ans) {
-        return template.execute(new RedisCallback<Boolean>() {
-            @Override
-            public Boolean doInRedis(RedisConnection redisConnection) throws DataAccessException {
-                return redisConnection.hSet(keyBytes(key), valBytes(field), valBytes(ans));
-            }
-        });
+        if (redissonClient == null) {
+            return false;
+        }
+        RMap<String, String> map = redissonClient.getMap(generateKey(key), StringCodec.INSTANCE);
+        String value = serialize(ans);
+        map.put(field, value);
+        return true;
     }
 
     public static <T> void hMSet(String key, Map<String, T> fields) {
-        Map<byte[], byte[]> val = Maps.newHashMapWithExpectedSize(fields.size());
-        for (Map.Entry<String, T> entry : fields.entrySet()) {
-            val.put(valBytes(entry.getKey()), valBytes(entry.getValue()));
+        if (redissonClient == null) {
+            return;
         }
-        template.execute((RedisCallback<Object>) connection -> {
-            connection.hMSet(keyBytes(key), val);
-            return null;
-        });
+        RMap<String, String> map = redissonClient.getMap(generateKey(key), StringCodec.INSTANCE);
+        Map<String, String> stringMap = new HashMap<>();
+        for (Map.Entry<String, T> entry : fields.entrySet()) {
+            stringMap.put(entry.getKey(), serialize(entry.getValue()));
+        }
+        map.putAll(stringMap);
     }
 
     public static <T> Map<String, T> hMGet(String key, final List<String> fields, Class<T> clz) {
-        return template.execute(new RedisCallback<Map<String, T>>() {
-            @Override
-            public Map<String, T> doInRedis(RedisConnection connection) throws DataAccessException {
-                byte[][] f = new byte[fields.size()][];
-                IntStream.range(0, fields.size()).forEach(i -> f[i] = valBytes(fields.get(i)));
-                List<byte[]> ans = connection.hMGet(keyBytes(key), f);
-                Map<String, T> result = Maps.newHashMapWithExpectedSize(fields.size());
-                IntStream.range(0, fields.size()).forEach(i -> {
-                    result.put(fields.get(i), toObj(ans.get(i), clz));
-                });
-                return result;
-            }
-        });
+        if (redissonClient == null) {
+            return Collections.emptyMap();
+        }
+        RMap<String, String> map = redissonClient.getMap(generateKey(key), StringCodec.INSTANCE);
+        Set<String> fieldSet = new HashSet<>(fields);
+        Map<String, String> allValues = map.getAll(fieldSet);
+        Map<String, T> result = Maps.newHashMapWithExpectedSize(fields.size());
+        for (String field : fields) {
+            result.put(field, toObj(allValues.get(field), clz));
+        }
+        return result;
     }
 
     /**
@@ -242,12 +252,12 @@ public class RedisClient {
      * @return
      */
     public static <T> Boolean sIsMember(String key, T value) {
-        return template.execute(new RedisCallback<Boolean>() {
-            @Override
-            public Boolean doInRedis(RedisConnection connection) throws DataAccessException {
-                return connection.sIsMember(keyBytes(key), valBytes(value));
-            }
-        });
+        if (redissonClient == null) {
+            return false;
+        }
+        RSet<String> set = redissonClient.getSet(generateKey(key), StringCodec.INSTANCE);
+        String valueStr = serialize(value);
+        return set.contains(valueStr);
     }
 
     /**
@@ -259,23 +269,15 @@ public class RedisClient {
      * @return
      */
     public static <T> Set<T> sGetAll(String key, Class<T> clz) {
-//        return template.execute(new RedisCallback<Set<T>>() {
-//            @Override
-//            public Set<T> doInRedis(RedisConnection connection) throws DataAccessException {
-//                Set<byte[]> set = connection.sMembers(keyBytes(key));
-//                if (CollectionUtils.isEmpty(set)) {
-//                    return Collections.emptySet();
-//                }
-//                return set.stream().map(s -> toObj(s, clz)).collect(Collectors.toSet());
-//            }
-//        });
-        return template.execute((RedisCallback<Set<T>>) con -> {
-            Set<byte[]> set = con.sMembers(keyBytes(key));
-            if (CollectionUtils.isEmpty(set)) {
-                return Collections.emptySet();
-            }
-            return set.stream().map(s -> toObj(s, clz)).collect(Collectors.toSet());
-        });
+        if (redissonClient == null) {
+            return Collections.emptySet();
+        }
+        RSet<String> set = redissonClient.getSet(generateKey(key), StringCodec.INSTANCE);
+        Set<String> stringSet = set.readAll();
+        if (stringSet == null) {
+            return Collections.emptySet();
+        }
+        return stringSet.stream().map(s -> toObj(s, clz)).collect(Collectors.toSet());
     }
 
     /**
@@ -287,12 +289,12 @@ public class RedisClient {
      * @return
      */
     public static <T> boolean sPut(String key, T val) {
-        return template.execute(new RedisCallback<Long>() {
-            @Override
-            public Long doInRedis(RedisConnection connection) throws DataAccessException {
-                return connection.sAdd(keyBytes(key), valBytes(val));
-            }
-        }) > 0;
+        if (redissonClient == null) {
+            return false;
+        }
+        RSet<String> set = redissonClient.getSet(generateKey(key), StringCodec.INSTANCE);
+        String value = serialize(val);
+        return set.add(value);
     }
 
     /**
@@ -303,15 +305,13 @@ public class RedisClient {
      * @param <T>
      */
     public static <T> void sDel(String key, T val) {
-        template.execute(new RedisCallback<Void>() {
-            @Override
-            public Void doInRedis(RedisConnection connection) throws DataAccessException {
-                connection.sRem(keyBytes(key), valBytes(val));
-                return null;
-            }
-        });
+        if (redissonClient == null) {
+            return;
+        }
+        RSet<String> set = redissonClient.getSet(generateKey(key), StringCodec.INSTANCE);
+        String value = serialize(val);
+        set.remove(value);
     }
-
 
     /**
      * 分数更新
@@ -322,43 +322,28 @@ public class RedisClient {
      * @return
      */
     public static Double zIncrBy(String key, String value, Integer score) {
-        return template.execute(new RedisCallback<Double>() {
-            @Override
-            public Double doInRedis(RedisConnection connection) throws DataAccessException {
-                return connection.zIncrBy(keyBytes(key), score, valBytes(value));
-            }
-        });
+        if (redissonClient == null) {
+            return 0.0;
+        }
+        RScoredSortedSet<String> sortedSet = redissonClient.getScoredSortedSet(generateKey(key), StringCodec.INSTANCE);
+        return sortedSet.addScore(value, score);
     }
 
-    public static ImmutablePair<Integer, Double> zRankInfo(String key, String value) {
-        double score = zScore(key, value);
-        int rank = zRank(key, value);
-        return ImmutablePair.of(rank, score);
-    }
-
-    /**
-     * 获取分数
-     *
-     * @param key
-     * @param value
-     * @return
-     */
     public static Double zScore(String key, String value) {
-        return template.execute(new RedisCallback<Double>() {
-            @Override
-            public Double doInRedis(RedisConnection connection) throws DataAccessException {
-                return connection.zScore(keyBytes(key), valBytes(value));
-            }
-        });
+        if (redissonClient == null) {
+            return 0.0;
+        }
+        RScoredSortedSet<String> sortedSet = redissonClient.getScoredSortedSet(generateKey(key), StringCodec.INSTANCE);
+        return sortedSet.getScore(value);
     }
 
     public static Integer zRank(String key, String value) {
-        return template.execute(new RedisCallback<Integer>() {
-            @Override
-            public Integer doInRedis(RedisConnection connection) throws DataAccessException {
-                return connection.zRank(keyBytes(key), valBytes(value)).intValue();
-            }
-        });
+        if (redissonClient == null) {
+            return -1;
+        }
+        RScoredSortedSet<String> sortedSet = redissonClient.getScoredSortedSet(generateKey(key), StringCodec.INSTANCE);
+        Integer rank = sortedSet.rank(value);
+        return rank != null ? rank : -1;
     }
 
     /**
@@ -368,110 +353,137 @@ public class RedisClient {
      * @param n
      * @return
      */
-    public static List<ImmutablePair<String, Double>> zTopNScore(String key, int n) {
-        return template.execute(new RedisCallback<List<ImmutablePair<String, Double>>>() {
-            @Override
-            public List<ImmutablePair<String, Double>> doInRedis(RedisConnection connection) throws DataAccessException {
-                Set<RedisZSetCommands.Tuple> set = connection.zRangeWithScores(keyBytes(key), -n, -1);
-                if (set == null) {
-                    return Collections.emptyList();
-                }
-                return set.stream()
-                        .map(tuple -> ImmutablePair.of(toObj(tuple.getValue(), String.class), tuple.getScore()))
-                        .sorted((o1, o2) -> Double.compare(o2.getRight(), o1.getRight())).collect(Collectors.toList());
-            }
-        });
+    public static List<org.apache.commons.lang3.tuple.ImmutablePair<String, Double>> zTopNScore(String key, int n) {
+        if (redissonClient == null) {
+            return Collections.emptyList();
+        }
+        RScoredSortedSet<String> sortedSet = redissonClient.getScoredSortedSet(generateKey(key), StringCodec.INSTANCE);
+        Collection<org.redisson.client.protocol.ScoredEntry<String>> entries = sortedSet.entryRange(-n, -1);
+        if (entries == null) {
+            return Collections.emptyList();
+        }
+        return entries.stream()
+                .map(entry -> org.apache.commons.lang3.tuple.ImmutablePair.of(entry.getValue(), entry.getScore()))
+                .sorted((o1, o2) -> Double.compare(o2.getRight(), o1.getRight())).collect(Collectors.toList());
     }
 
-
     public static <T> Long lPush(String key, T val) {
-        return template.execute(new RedisCallback<Long>() {
-            @Override
-            public Long doInRedis(RedisConnection connection) throws DataAccessException {
-                return connection.lPush(keyBytes(key), valBytes(val));
-            }
-        });
+        if (redissonClient == null) {
+            return 0L;
+        }
+        RList<String> list = redissonClient.getList(generateKey(key), StringCodec.INSTANCE);
+        String value = serialize(val);
+        list.add(0, value); // 在开头添加元素
+        return (long) list.size(); // 返回列表长度
     }
 
     public static <T> Long rPush(String key, T val) {
-        return template.execute(new RedisCallback<Long>() {
-            @Override
-            public Long doInRedis(RedisConnection connection) throws DataAccessException {
-                return connection.rPush(keyBytes(key), valBytes(val));
-            }
-        });
+        if (redissonClient == null) {
+            return 0L;
+        }
+        RList<String> list = redissonClient.getList(generateKey(key), StringCodec.INSTANCE);
+        String value = serialize(val);
+        list.add(value); // 在末尾添加元素
+        return (long) list.size(); // 返回列表长度
     }
 
     public static <T> List<T> lRange(String key, int start, int size, Class<T> clz) {
-        return template.execute(new RedisCallback<List<T>>() {
-
-            @Override
-            public List<T> doInRedis(RedisConnection connection) throws DataAccessException {
-                List<byte[]> list = connection.lRange(keyBytes(key), start, size);
-                if (CollectionUtils.isEmpty(list)) {
-                    return new ArrayList<>();
-                }
-                return list.stream().map(k -> toObj(k, clz)).collect(Collectors.toList());
-            }
-        });
+        if (redissonClient == null) {
+            return new ArrayList<>();
+        }
+        RList<String> list = redissonClient.getList(generateKey(key), StringCodec.INSTANCE);
+        List<String> stringList = list.range(start, start + size - 1);
+        if (stringList == null) {
+            return new ArrayList<>();
+        }
+        return stringList.stream().map(k -> toObj(k, clz)).collect(Collectors.toList());
     }
 
     public static void lTrim(String key, int start, int size) {
-        template.execute(new RedisCallback<Void>() {
-            @Override
-            public Void doInRedis(RedisConnection connection) throws DataAccessException {
-                connection.lTrim(keyBytes(key), start, size);
-                return null;
-            }
-        });
+        if (redissonClient == null) {
+            return;
+        }
+        RList<String> list = redissonClient.getList(generateKey(key), StringCodec.INSTANCE);
+        list.trim(start, start + size - 1);
     }
 
-    private static <T> T toObj(byte[] ans, Class<T> clz) {
+    // ZSet 相关操作 - 用于延迟队列
+    public static <T> Boolean zAdd(String key, T value, double score) {
+        if (redissonClient == null) {
+            return false; // RedissonClient未初始化，返回false
+        }
+        RScoredSortedSet<String> sortedSet = redissonClient.getScoredSortedSet(generateKey(key), StringCodec.INSTANCE);
+        String valueStr = serialize(value);
+        return sortedSet.add(score, valueStr);
+    }
+
+    public static <T> Set<T> zRangeByScore(String key, double min, double max, Class<T> clz) {
+        if (redissonClient == null) {
+            return Collections.emptySet();
+        }
+        RScoredSortedSet<String> sortedSet = redissonClient.getScoredSortedSet(generateKey(key), StringCodec.INSTANCE);
+        Collection<String> values = sortedSet.valueRange(min, true, max, true);
+        if (values == null) {
+            return Collections.emptySet();
+        }
+        return values.stream().map(s -> toObj(s, clz)).collect(Collectors.toSet());
+    }
+
+    public static <T> Set<T> zRangeWithScores(String key, long start, long end, Class<T> clz) {
+        if (redissonClient == null) {
+            return Collections.emptySet();
+        }
+        RScoredSortedSet<String> sortedSet = redissonClient.getScoredSortedSet(generateKey(key), StringCodec.INSTANCE);
+        Collection<org.redisson.client.protocol.ScoredEntry<String>> entries = sortedSet.entryRange((int)start, (int)end);
+        if (entries == null) {
+            return Collections.emptySet();
+        }
+        return entries.stream().map(entry -> toObj(entry.getValue(), clz)).collect(Collectors.toSet());
+    }
+
+    public static Long zRem(String key, String... values) {
+        if (redissonClient == null) {
+            return 0L; // RedissonClient未初始化，返回0
+        }
+        RScoredSortedSet<String> sortedSet = redissonClient.getScoredSortedSet(generateKey(key), StringCodec.INSTANCE);
+        int count = 0;
+        for (String value : values) {
+            if (sortedSet.remove(value)) {
+                count++;
+            }
+        }
+        return (long) count;
+    }
+
+    public static Set<String> zRangeByScoreForString(String key, double min, double max) {
+        if (redissonClient == null) {
+            return Collections.emptySet(); // RedissonClient未初始化，返回空集合
+        }
+        RScoredSortedSet<String> sortedSet = redissonClient.getScoredSortedSet(generateKey(key), StringCodec.INSTANCE);
+        Collection<String> values = sortedSet.valueRange(min, true, max, true);
+        if (values == null) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(values);
+    }
+
+    public static Long zCard(String key) {
+        if (redissonClient == null) {
+            return 0L;
+        }
+        RScoredSortedSet<String> sortedSet = redissonClient.getScoredSortedSet(generateKey(key), StringCodec.INSTANCE);
+        return (long) sortedSet.size();
+    }
+
+    private static <T> T toObj(String ans, Class<T> clz) {
         if (ans == null) {
             return null;
         }
 
         if (clz == String.class) {
-            return (T) new String(ans, CODE);
+            return (T) ans;
         }
 
-        return JsonUtil.toObj(new String(ans, CODE), clz);
-    }
-
-
-    public static PipelineAction pipelineAction() {
-        return new PipelineAction();
-    }
-
-    /**
-     * redis 管道执行的封装链路
-     */
-    public static class PipelineAction {
-        private List<Runnable> run = new ArrayList<>();
-
-        private RedisConnection connection;
-
-        public PipelineAction add(String key, BiConsumer<RedisConnection, byte[]> conn) {
-            run.add(() -> conn.accept(connection, RedisClient.keyBytes(key)));
-            return this;
-        }
-
-        public PipelineAction add(String key, String field, ThreeConsumer<RedisConnection, byte[], byte[]> conn) {
-            run.add(() -> conn.accept(connection, RedisClient.keyBytes(key), valBytes(field)));
-            return this;
-        }
-
-        public void execute() {
-            template.executePipelined((RedisCallback<Object>) connection -> {
-                PipelineAction.this.connection = connection;
-                run.forEach(Runnable::run);
-                return null;
-            });
-        }
-    }
-
-    @FunctionalInterface
-    public interface ThreeConsumer<T, U, P> {
-        void accept(T t, U u, P p);
+        return JsonUtil.toObj(ans, clz);
     }
 }

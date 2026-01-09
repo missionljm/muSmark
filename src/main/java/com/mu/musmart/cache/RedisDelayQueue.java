@@ -133,7 +133,7 @@ public class RedisDelayQueue {
                 logger.warn("RedissonClient未初始化，跳过本次扫描: queueKey={}", queueKey);
                 return;
             }
-            logger.info("redis初始化成功，扫描开始");
+//            logger.info("redis初始化成功，扫描开始");
             long currentTime = System.currentTimeMillis();
             
             // 获取所有到期的消息（score <= 当前时间）

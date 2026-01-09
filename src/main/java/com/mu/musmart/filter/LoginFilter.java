@@ -69,6 +69,7 @@ public class LoginFilter implements Filter {
                     httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401状态码
                     httpResponse.setContentType("application/json;charset=utf-8");
                     httpResponse.getWriter().write(JSONUtil.toJsonStr(ResVo.fail(StatusEnum.FORBID_NOTLOGIN , StatusEnum.FORBID_NOTLOGIN.getMsg())));
+                    return;
                 }else {
                     stopWatch.start("请求参数构建");
                     req.getCookies();

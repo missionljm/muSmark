@@ -2,7 +2,6 @@ package com.mu.musmart.controller.common;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.CircleCaptcha;
-import cn.hutool.captcha.LineCaptcha;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.mu.musmart.cache.RedisClient;
@@ -10,14 +9,12 @@ import com.mu.musmart.context.ReqInfoContext;
 import com.mu.musmart.domain.vo.ResVo;
 import com.mu.musmart.enums.common.StatusEnum;
 import com.mu.musmart.service.LoginService;
-import com.mu.musmart.service.impl.LoginServiceImpl;
 import com.mu.musmart.util.SessionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.ServletRequest;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.*;
@@ -51,6 +48,10 @@ public class LoginController {
         String verificationCode = lineCaptcha.getImageBase64();
         lineCaptcha.setBackground(Color.BLACK);
         String code = lineCaptcha.getCode();
+        if (StrUtil.isNotEmpty(RedisClient.getStr(userAccount))){
+            RedisClient.del(userAccount);
+        }
+        log.info("验证码为：{}" ,  code);
         RedisClient.setStr(userAccount , code);
         RedisClient.expire(userAccount , Long.valueOf(60 * 1000));
         return ResVo.ok(verificationCode);

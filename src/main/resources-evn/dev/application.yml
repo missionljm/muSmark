@@ -16,7 +16,7 @@ spring:
     url: jdbc:mysql://localhost:3306/${database.name}?useUnicode=true&allowPublicKeyRetrieval=true&autoReconnect=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
     password: 123321
-    driver-class-name: com.mysql.jdbc.Driver
+#    driver-class-name: com.mysql.jdbc.Driver
 
 # 系统jwt校验
 musmart:
@@ -24,6 +24,17 @@ musmart:
     issuer: muSmart
     secret: 123321muSmart@google.com
     expire: 259200000
+
+logging:
+  level:
+    com.mu.musmart: info
+    org.springframework: info
+    org.redisson: info
+  file:
+    name: "logs/musmart.log"
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" #日志文件
+    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" #控制台文件
 
 log:
   path: logs

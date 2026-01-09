@@ -1,3 +1,17 @@
 spring:
   application:
     name: MuSmart
+
+server:
+  port: 4439
+
+#logging:
+#  level:
+#    com.mu.musmart: debug
+#    org.springframework: info
+#    org.redisson: info
+#  file:
+#    name: logs/musmart.log
+#  pattern:
+#    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n%" #日志文件
+#    console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" #控制台文件

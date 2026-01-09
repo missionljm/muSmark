@@ -1,6 +1,7 @@
 package com.mu.musmart.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.mu.musmart.cache.RedisClient;
 import com.mu.musmart.dao.user.UserDao;
 import com.mu.musmart.domain.entity.user.UserDO;
 import com.mu.musmart.enums.common.StatusEnum;
@@ -40,6 +41,20 @@ public class LoginServiceImpl implements LoginService {
         Optional<String> password = Optional.ofNullable(loginPar.get("password")).map(Object::toString);
         Optional<String> yzm = Optional.ofNullable(loginPar.get("verifyCode")).map(Object::toString);
         UserDO userDo = userDao.getUserByUserAccount(username.get());
+        //校验验证码
+        if (yzm.isEmpty()){
+            throw ExceptionUtil.of(StatusEnum.ILLEGAL_ARGUMENTS_MIXED , "请输入验证码");
+        }
+        if (ObjectUtil.isEmpty(RedisClient.getStr(username.get()))){
+            throw ExceptionUtil.of(StatusEnum.UNEXPECT_ERROR , "验证码已过期");
+        }else {
+            String yzmr = RedisClient.getStr(username.get());
+            if (!yzm.get().equals(yzmr)){
+                throw ExceptionUtil.of(StatusEnum.UNEXPECT_ERROR , "验证码错误");
+            }else {
+                RedisClient.del(username.get());
+            }
+        }
         // 判断用户是否存在
         if (ObjectUtil.isNotEmpty(userDo)){
             if (!userDo.getPassword().equals(password.get())){

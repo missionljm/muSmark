@@ -9,8 +9,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * @author YiHui
- * @date 2022/7/6
+ * @author missionLjm
+ * @date 2025/7/6
  */
 public class MapUtils {
 

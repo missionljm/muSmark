@@ -9,8 +9,8 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 /**
- * @author YiHui
- * @date 2022/8/15
+ * @author missionLjm
+ * @date 2025/8/15
  */
 @Data
 @ApiModel("用户基础实体对象")

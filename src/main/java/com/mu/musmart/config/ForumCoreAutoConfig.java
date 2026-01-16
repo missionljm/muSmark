@@ -9,8 +9,8 @@ import org.springframework.core.Ordered;
 import org.redisson.api.RedissonClient;
 
 /**
- * @author YiHui
- * @date 2022/9/4
+ * @author missionLjm
+ * @date 2025/9/4
  */
 @Configuration
 @ComponentScan(basePackages = "com.mu.musmart")

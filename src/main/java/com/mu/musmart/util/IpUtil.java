@@ -1,7 +1,7 @@
 package com.mu.musmart.util;
 
 
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.github.hui.quick.plugin.base.file.FileWriteUtil;
 import com.mu.musmart.region.IpRegionInfo;
@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * @author YiHui
- * @date 2022/7/6
+ * @author missionLjm
+ * @date 2025/7/6
  */
 @Slf4j
 public class IpUtil {
@@ -37,7 +37,7 @@ public class IpUtil {
 
         // 所有网络接口信息
         Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-        if (ObjectUtils.isEmpty(networkInterfaces)) {
+        if (ObjectUtil.isEmpty(networkInterfaces)) {
             return addresses;
         }
         while (networkInterfaces.hasMoreElements()) {

@@ -6,8 +6,8 @@ import com.mu.musmart.domain.dto.user.BaseUserInfoDTO;
 import lombok.Data;
 
 /**
- * @author YiHui
- * @date 2022/9/3
+ * @author missionLjm
+ * @date 2025/9/3
  */
 @Data
 public class GlobalVo {

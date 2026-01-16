@@ -3,8 +3,8 @@ package com.mu.musmart.util;
 import org.springframework.util.Assert;
 
 /**
- * @author YiHui
- * @date 2022/8/29
+ * @author missionLjm
+ * @date 2025/8/29
  */
 public class EnvUtil {
     private static volatile EnvEnum env;

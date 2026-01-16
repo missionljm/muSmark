@@ -4,8 +4,8 @@ package com.mu.musmart.service;
 import java.util.Map;
 
 /**
- * @author YiHui
- * @date 2022/8/15
+ * @author missionLjm
+ * @date 2025/8/15
  */
 public interface LoginService {
     String SESSION_KEY = "f-session";

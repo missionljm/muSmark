@@ -8,8 +8,8 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * @author YiHui
- * @date 2022/7/6
+ * @author missionLjm
+ * @date 2025/7/6
  */
 @Data
 public class ResVo<T> implements Serializable {

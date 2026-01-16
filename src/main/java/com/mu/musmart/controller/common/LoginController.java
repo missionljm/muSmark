@@ -10,6 +10,7 @@ import com.mu.musmart.domain.vo.ResVo;
 import com.mu.musmart.enums.common.StatusEnum;
 import com.mu.musmart.service.LoginService;
 import com.mu.musmart.util.SessionUtil;
+import com.mu.musmart.util.role.aspect.RequestPermission;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -58,6 +59,7 @@ public class LoginController {
     }
 
     @PostMapping("/test")
+    @RequestPermission(value = "user:admin")
     public ResVo<String> test(@RequestBody Map map) {
         log.info("test: {}" , JSONUtil.toJsonStr(map));
         ReqInfoContext.ReqInfo reqInfo = ReqInfoContext.getReqInfo();

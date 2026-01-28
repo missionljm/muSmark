@@ -1,10 +1,11 @@
-package com.mu.musmart.domain.vo;
+package com.mu.musmart.exception;
 
 
 
 import com.mu.musmart.context.ReqInfoContext;
+import com.mu.musmart.domain.vo.ResVo;
+import com.mu.musmart.domain.vo.Status;
 import com.mu.musmart.enums.common.StatusEnum;
-import com.mu.musmart.exception.ForumException;
 import com.mu.musmart.util.JsonUtil;
 
 import lombok.extern.slf4j.Slf4j;

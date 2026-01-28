@@ -23,7 +23,7 @@ musmart:
   jwt:
     issuer: muSmart
     secret: 123321muSmart@google.com
-    expire: 259200000
+    expire: 30000
 
 logging:
   level:

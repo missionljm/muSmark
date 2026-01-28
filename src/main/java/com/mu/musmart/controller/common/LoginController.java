@@ -59,7 +59,7 @@ public class LoginController {
     }
 
     @PostMapping("/test")
-    @RequestPermission(value = "user:admin")
+    @RequestPermission(value = "user:admin" , type = "ROLE_ADMIN_STRATEGY")
     public ResVo<String> test(@RequestBody Map map) {
         log.info("test: {}" , JSONUtil.toJsonStr(map));
         ReqInfoContext.ReqInfo reqInfo = ReqInfoContext.getReqInfo();

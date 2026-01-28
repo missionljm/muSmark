@@ -1,6 +1,6 @@
 package com.mu.musmart;
 
-import com.mu.musmart.domain.vo.ForumExceptionHandler;
+import com.mu.musmart.exception.ForumExceptionHandler;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;

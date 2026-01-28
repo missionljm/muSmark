@@ -1,14 +1,18 @@
 package com.mu.musmart.controller.common;
 
+import cn.hutool.json.JSONUtil;
 import com.mu.musmart.domain.vo.ResVo;
 import com.mu.musmart.enums.common.StatusEnum;
 import com.mu.musmart.service.DelayQueueService;
 import com.mu.musmart.service.impl.DelayQueueExample;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 延迟队列控制器
@@ -20,6 +24,7 @@ import java.util.Map;
 @RequestMapping("/delay-queue")
 public class DelayQueueController {
 
+    private static final Logger log = LoggerFactory.getLogger(DelayQueueController.class);
     @Autowired
     private DelayQueueService delayQueueService;
     
@@ -38,6 +43,16 @@ public class DelayQueueController {
         } else {
             return ResVo.fail(StatusEnum.valueOf("添加订单超时任务失败"));
         }
+    }
+
+    @PostMapping("/order-test")
+    public ResVo<String> testOrder(@RequestBody Map params){
+        delayQueueService.createDelayQueue("TEST_ORDER" , message ->  {
+            log.info("輸入的數據為：{}", message);
+            return true;
+        } );
+        delayQueueService.addDelayMessage("TEST_ORDER" , JSONUtil.toJsonStr(params).toString() , 3000);
+        return ResVo.ok();
     }
 
     /**

@@ -37,6 +37,7 @@ public class AuthAspect {
         String strategy = permission.type();
         //
         String permissionValue = permission.value();
-        abstractPermissionHandler.getStrategy(RoleStrategyEnum.getContextByCode(strategy)).verify(permissionValue);
+        RoleStrategyEnum contextByCode = RoleStrategyEnum.getContextByCode(strategy);
+        abstractPermissionHandler.getStrategy(contextByCode).verify(permissionValue);
     }
 }

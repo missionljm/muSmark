@@ -12,7 +12,9 @@ public enum RoleStrategyEnum {
 
     ROLE_USER_STRATEGY("ROLE_USER_STRATEGY", "用户权限验证"),
 
-    ROLE_URL_STRATEGY("ROLE_URL_STRATEGY", "URL权限验证")
+    ROLE_URL_STRATEGY("ROLE_URL_STRATEGY", "URL权限验证"),
+
+    ROLE_ADMIN_STRATEGY("ROLE_ADMIN_STRATEGY", "管理员权限验证"),
     ;
 
 
@@ -34,6 +36,7 @@ public enum RoleStrategyEnum {
         }
         return null;
     }
+
 
 
 

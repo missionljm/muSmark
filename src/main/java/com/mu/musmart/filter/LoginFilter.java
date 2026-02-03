@@ -52,6 +52,17 @@ public class LoginFilter implements Filter {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) servletRequest;
+        HttpServletResponse response = (HttpServletResponse) servletResponse;
+
+        // 首先处理跨域请求，确保所有响应都有CORS头部
+        CrossUtil.buildCors(req, response);
+
+        // 如果是预检请求，直接返回
+        if ("OPTIONS".equalsIgnoreCase(req.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            return;
+        }
+
         long start = System.currentTimeMillis();
         if (isStaticUri(req)){
             filterChain.doFilter(req, servletResponse);
@@ -75,8 +86,6 @@ public class LoginFilter implements Filter {
                     req.getCookies();
                     HttpServletRequest reqSec = this.initReqInfo((HttpServletRequest) servletRequest, (HttpServletResponse) servletResponse);
                     stopWatch.stop();
-                    stopWatch.start("跨域请求");
-                    CrossUtil.buildCors(reqSec , (HttpServletResponse) servletResponse);
                     req = reqSec;
                 }
                 filterChain.doFilter(req, servletResponse);

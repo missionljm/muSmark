@@ -48,7 +48,7 @@ public class ForumExceptionHandler implements HandlerExceptionResolver {
             }
 
             try {
-                response.reset();
+//                response.reset();
                 // 若是rest接口请求异常时，返回json格式的异常数据；而不是专门的500页面
                 response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
                 response.setHeader("Cache-Control", "no-cache, must-revalidate");

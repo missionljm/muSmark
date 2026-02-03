@@ -3,6 +3,7 @@ package com.mu.musmart.util;
 
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.MediaType;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,6 +22,7 @@ public class CrossUtil {
      */
     public static void buildCors(HttpServletRequest request, HttpServletResponse response) {
         String origin = request.getHeader("Origin");
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         if (StringUtils.isBlank(origin)) {
             response.setHeader("Access-Control-Allow-Origin", "*");
             response.setHeader("Access-Control-Allow-Credentials", "false");

@@ -19,6 +19,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.*;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -34,7 +35,7 @@ public class LoginController {
         String token = loginService.loginByUserPwd(loginPar);
         resp.addCookie(SessionUtil.newCookie(LoginService.SESSION_KEY , token));
         log.info("login successful");
-        return ResVo.ok();
+        return ResVo.ok(token);
     }
 
     @GetMapping("/getVerificationCode")
@@ -54,7 +55,7 @@ public class LoginController {
         }
         log.info("验证码为：{}" ,  code);
         RedisClient.setStr(userAccount , code);
-        RedisClient.expire(userAccount , Long.valueOf(60 * 1000));
+        RedisClient.expire(userAccount , 60L * 2000L);
         return ResVo.ok(verificationCode);
     }
 
@@ -66,5 +67,6 @@ public class LoginController {
         log.info("test successful:{}" , JSONUtil.toJsonStr(reqInfo));
         return ResVo.ok();
     }
+
 
 }

@@ -1,6 +1,7 @@
 package com.mu.musmart.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.mu.musmart.cache.RedisClient;
 import com.mu.musmart.dao.user.UserDao;
 import com.mu.musmart.domain.entity.user.UserDO;
@@ -12,6 +13,7 @@ import com.mu.musmart.service.help.UserSessionHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -48,8 +50,8 @@ public class LoginServiceImpl implements LoginService {
         if (ObjectUtil.isEmpty(RedisClient.getStr(username.get()))){
             throw ExceptionUtil.of(StatusEnum.UNEXPECT_ERROR , "验证码已过期");
         }else {
-            String yzmr = RedisClient.getStr(username.get());
-            if (!yzm.get().equals(yzmr)){
+            String yzmr = RedisClient.getStr(username.get()).toUpperCase(Locale.ENGLISH);
+            if (!yzm.get().toUpperCase(Locale.ENGLISH).equals(yzmr)){
                 throw ExceptionUtil.of(StatusEnum.UNEXPECT_ERROR , "验证码错误");
             }else {
                 RedisClient.del(username.get());

@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
 import java.util.Map;
 
 @Mapper
@@ -14,4 +15,14 @@ public interface CommonMapper extends BaseMapper<Object> {
             "left join base_menu T1 on T0.menu_id = T1.id\n" +
             "where T0.role_id = #{roleId} and T0.deleted = 0")
     Map<String , String> getMenuByRoleId(@Param("roleId") String roleId);
+
+    @Select("select T3.path , T3.component , T3.redirect , T3.name , T3.title , T3.icon , T3.id , T3.hidden  from user T0\n" +
+            "left join base_role_user T1 on T0.id = T1.user_id\n" +
+            "left join base_role_menu T2 on T1.role_id = T2.role_id\n" +
+            "left join base_menu T3 on T2.menu_id = T3.id\n" +
+            "where T0.id = #{userId} and T0.deleted = 0 and level = #{level}")
+    List<Map<String , Object>> getUserPermission(@Param("userId") Long userId , @Param("level") Integer level);
+
+    @Select("select component , redirect , name , title , icon , id , path from base_menu where parents_id = #{parentId}")
+    List<Map<String , Object>> getUserPermissionByParentsId(@Param("parentId") Long userId);
 }

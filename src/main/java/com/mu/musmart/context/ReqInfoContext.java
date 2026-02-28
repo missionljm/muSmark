@@ -6,6 +6,8 @@ import com.mu.musmart.domain.dto.user.BaseUserInfoDTO;
 import lombok.Data;
 
 import java.security.Principal;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 请求上下文，携带用户身份相关信息
@@ -76,6 +78,8 @@ public class ReqInfoContext {
          * 消息数量
          */
         private Integer msgNum;
+
+        private List<Map> routes;
 
 //        private Seo seo;
 

@@ -23,4 +23,13 @@ public class BaseDo implements Serializable {
 
     @TableField("update_time")
     private Date updateTime;
+
+    @TableField("deleted")
+    private Integer deleted;
+
+    @TableField("create_by")
+    private String createBy;
+
+    @TableField("update_by")
+    private String updateBy;
 }

@@ -38,10 +38,5 @@ public class RoleDO extends BaseDo {
     @TableField("versom")
     private String versom;
 
-    /**
-     * 是否删除
-     */
-    @TableField("deleted")
-    private Integer deleted;
 
 }

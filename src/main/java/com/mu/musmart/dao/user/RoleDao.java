@@ -8,6 +8,8 @@ import com.mu.musmart.mapper.RoleMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public class RoleDao extends ServiceImpl<RoleMapper, RoleDO> {
 
@@ -24,4 +26,12 @@ public class RoleDao extends ServiceImpl<RoleMapper, RoleDO> {
     public RoleDO getRoleByRoleCode(String roleCode){
         return roleMapper.selectOne(new QueryWrapper<RoleDO>().eq("code",roleCode));
     };
+
+    public List<String> getRoleByUserId(Long userId){
+        return roleMapper.getRoleByUserId(userId);
+    }
+
+    public List<String> getRoleIdByUserId(Long userId){
+        return roleMapper.getRoleIdByUserId(userId);
+    }
 }

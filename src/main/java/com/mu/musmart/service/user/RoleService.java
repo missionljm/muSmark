@@ -3,6 +3,7 @@ package com.mu.musmart.service.user;
 import com.mu.musmart.domain.entity.user.RoleDO;
 import com.mu.musmart.domain.vo.ResVo;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,5 +15,13 @@ public interface RoleService {
 
     Map getMenuByRoleCode(String code);
 
-    ResVo<RoleDO> queryRoleList();
+    List<String> queryRoleListByUserId(Long userId);
+
+    /**
+     * 授权
+     * @param params
+     */
+    void toGrantAuthorization(Map params);
+
+
 }

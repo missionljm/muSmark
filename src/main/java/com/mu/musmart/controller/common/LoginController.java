@@ -68,5 +68,12 @@ public class LoginController {
         return ResVo.ok();
     }
 
+    @PostMapping("/logout")
+    public ResVo<String> logout() {
+        ReqInfoContext.ReqInfo reqInfo = ReqInfoContext.getReqInfo();
+        loginService.logout(reqInfo.getSession());
+        return ResVo.ok();
+    }
+
 
 }

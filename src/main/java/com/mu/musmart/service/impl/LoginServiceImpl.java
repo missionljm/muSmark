@@ -29,7 +29,7 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public void logout(String session) {
-
+        userSessionHelper.removeSession(session);
     }
 
 //    @Override

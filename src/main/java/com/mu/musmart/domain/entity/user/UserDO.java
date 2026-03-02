@@ -43,11 +43,6 @@ public class UserDO extends BaseDo {
     @TableField("login_type")
     private Integer loginType;
 
-    /**
-     * 是否删除
-     */
-    @TableField("deleted")
-    private Integer deleted;
 
 
 

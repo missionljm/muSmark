@@ -81,7 +81,7 @@ public class UserServiceImpl implements UserService {
                 map.put("meta" , meta);
                 map.remove("title");
                 map.remove("icon");
-                this.queryUserPermissionTree(map , menuId);
+                this.queryUserPermissionTree(map , menuId , userId);
             }
 
             log.info("UserServiceImpl_queryUserPermissionList_userPermissionList:{}" , JSONUtil.toJsonStr(userPermissionList));
@@ -94,8 +94,8 @@ public class UserServiceImpl implements UserService {
      * @param paramsMap
      * @param parentId
      */
-    public void queryUserPermissionTree( Map paramsMap , Long parentId){
-        List<Map<String, Object>> userPermission = commonMapper.getUserPermissionByParentsId(parentId);
+    public void queryUserPermissionTree( Map paramsMap , Long parentId , Long userId){
+        List<Map<String, Object>> userPermission = commonMapper.getUserPermissionByParentsId(parentId , userId);
         if (CollectionUtil.isEmpty(userPermission)){
             return;
         }
@@ -109,7 +109,7 @@ public class UserServiceImpl implements UserService {
             map.put("meta" , meta);
             map.remove("title");
             map.remove("icon");
-            this.queryUserPermissionTree(map  , menuId);
+            this.queryUserPermissionTree(map  , menuId , userId);
             resultList.add(map);
         }
         paramsMap.put("children" , resultList);

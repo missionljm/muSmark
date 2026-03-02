@@ -23,6 +23,21 @@ public interface CommonMapper extends BaseMapper<Object> {
             "where T0.id = #{userId} and T0.deleted = 0 and level = #{level}")
     List<Map<String , Object>> getUserPermission(@Param("userId") Long userId , @Param("level") Integer level);
 
-    @Select("select component , redirect , name , title , icon , id , path from base_menu where parents_id = #{parentId}")
-    List<Map<String , Object>> getUserPermissionByParentsId(@Param("parentId") Long userId);
+    @Select("select\n" +
+            "\tbm.component ,\n" +
+            "\tbm.redirect ,\n" +
+            "\tbm.name ,\n" +
+            "\tbm.title ,\n" +
+            "\tbm.icon ,\n" +
+            "\tbm.id ,\n" +
+            "\tbm.path\n" +
+            "from\n" +
+            "\tbase_menu bm\n" +
+            "\tinner join base_role_menu brm on bm.id = brm.menu_id\n" +
+            "\tinner join base_role_user bru on bru.role_id = brm.role_id\n" +
+            "where\n" +
+            "\tbm.parents_id =\n" +
+            "\t#{parentId}\n" +
+            "\tand bru.user_id = #{userId}")
+    List<Map<String , Object>> getUserPermissionByParentsId(@Param("parentId") Long parentId , @Param("userId") Long userId);
 }

@@ -8,6 +8,7 @@ import com.mu.musmart.cache.RedisClient;
 import com.mu.musmart.context.ReqInfoContext;
 import com.mu.musmart.domain.vo.ResVo;
 import com.mu.musmart.enums.common.StatusEnum;
+import com.mu.musmart.mdc.MdcDot;
 import com.mu.musmart.service.LoginService;
 import com.mu.musmart.util.SessionUtil;
 import com.mu.musmart.util.role.aspect.RequestPermission;
@@ -61,6 +62,7 @@ public class LoginController {
 
     @PostMapping("/test")
     @RequestPermission(value = "user:admin" , type = "ROLE_ADMIN_STRATEGY")
+    @MdcDot(bizCode = "'test'")
     public ResVo<String> test(@RequestBody Map map) {
         log.info("test: {}" , JSONUtil.toJsonStr(map));
         ReqInfoContext.ReqInfo reqInfo = ReqInfoContext.getReqInfo();

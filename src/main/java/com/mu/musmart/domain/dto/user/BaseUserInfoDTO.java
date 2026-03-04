@@ -25,8 +25,20 @@ public class BaseUserInfoDTO extends BaseDTO {
     /**
      * 用户名
      */
-    @ApiModelProperty(value = "用户名", required = true)
+    @ApiModelProperty(value = "用户名")
     private String userName;
+
+    /**
+     * 用户账号
+     */
+    @ApiModelProperty(value = "用户账号", required = true)
+    private String userAccount;
+
+    /**
+     * 身份证
+     */
+    @ApiModelProperty(value = "身份证", required = true)
+    private String idCard;
 
     /**
      * 用户角色 admin, normal
@@ -37,7 +49,7 @@ public class BaseUserInfoDTO extends BaseDTO {
     /**
      * 用户图像
      */
-    @ApiModelProperty(value = "用户头像")
+    @ApiModelProperty(value = "用户照片")
     private String photo;
     /**
      * 个人简介
@@ -75,19 +87,22 @@ public class BaseUserInfoDTO extends BaseDTO {
     private String region;
 
     /**
+     * 用户头像
+     */
+    @ApiModelProperty(value = "用户头像")
+    private String avatar;
+
+    /**
+     * 电话号码
+     */
+    @ApiModelProperty(value = "电话号码")
+    private String phone;
+
+    /**
      * 星球状态
      */
     private UserAIStatEnum starStatus;
 
-//    /**
-//     * 星球编号
-//     */
-//    private String starNumber;
-//
-//    /**
-//     * 星球到期时间(秒)
-//     */
-//    private Date expireTime;
 
     /**
      * 用户的邮箱
@@ -95,9 +110,4 @@ public class BaseUserInfoDTO extends BaseDTO {
     @ApiModelProperty(value = "用户邮箱", example = "paicoding@126.com")
     private String email;
 
-//    /**
-//     * 收款码信息
-//     */
-//    @ApiModelProperty(value = "用户的收款码", example = "{\"wx\":\"wxp://f2f0YUXuGn6X2dI6FS2GrMjuG0Lw2plZqwjO4keoZaRr320\"}")
-//    private String payCode;
 }

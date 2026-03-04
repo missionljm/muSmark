@@ -16,5 +16,5 @@ public interface UserService {
 
     List<Map> queryUserPermissionList(List<Map> userPermissionList ,Long userId ,  Integer level);
 
-    IPage<UserDO> getPageUserList(Map params);
+    IPage<Map> getPageUserList(Map params);
 }

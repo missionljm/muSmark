@@ -10,8 +10,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mu.musmart.context.ReqInfoContext;
 import com.mu.musmart.dao.user.UserDao;
+import com.mu.musmart.dao.user.UserInfoDao;
 import com.mu.musmart.domain.dto.user.BaseUserInfoDTO;
 import com.mu.musmart.domain.entity.user.UserDO;
+import com.mu.musmart.domain.entity.user.UserInfoDO;
 import com.mu.musmart.mapper.CommonMapper;
 import com.mu.musmart.service.help.UserSessionHelper;
 import com.mu.musmart.service.user.UserService;
@@ -39,6 +41,9 @@ public class UserServiceImpl implements UserService {
     private UserDao userDao;
 
     @Autowired
+    private UserInfoDao userInfoDao;
+
+    @Autowired
     private UserSessionHelper userSessionHelper;
 
     @Autowired
@@ -50,10 +55,17 @@ public class UserServiceImpl implements UserService {
     public BaseUserInfoDTO getAndUpdateUserIpInfoBySessionId(String sessionId , String clientIp) {
         Long userId = userSessionHelper.getUserIdBySession(sessionId);
         UserDO userDo = userDao.getUserById(userId);
+        UserInfoDO userInfo = userInfoDao.getUserInfoById(userId);
         BaseUserInfoDTO baseUserInfoDTO = new BaseUserInfoDTO();
         baseUserInfoDTO.setId(userDo.getId());
-        baseUserInfoDTO.setUserName(userDo.getUserName());
+        baseUserInfoDTO.setUserAccount(userDo.getUserName());
         baseUserInfoDTO.setRegion(clientIp);
+        baseUserInfoDTO.setEmail(userInfo.getEmail());
+        baseUserInfoDTO.setPhone(userInfo.getPhone());
+        baseUserInfoDTO.setPhoto(userInfo.getPhoto());
+        baseUserInfoDTO.setAvatar(userInfo.getAvatar());
+        baseUserInfoDTO.setUserName(userInfo.getUserName());
+        baseUserInfoDTO.setIdCard(userInfo.getIdCard());
         return baseUserInfoDTO;
     }
 
@@ -121,13 +133,11 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    public IPage<UserDO> getPageUserList(Map params) {
+    public IPage<Map> getPageUserList(Map params) {
         //使用mybatis的分页方法
         Page<UserDO> pageUser = new Page<>(Long.valueOf(params.get("page").toString()), Long.valueOf(params.get("limit").toString()));
-        QueryWrapper queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("deleted" , 0);
         //查询所有用户信息进行返回
-        IPage<UserDO> page = userDao.page(pageUser, queryWrapper);
+        IPage<Map> page = userDao.getUserPageList(pageUser, params);
         return page;
     }
 }

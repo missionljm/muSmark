@@ -9,10 +9,7 @@ import com.mu.musmart.domain.vo.ResVo;
 import com.mu.musmart.service.user.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -41,7 +38,7 @@ public class UserController {
     }
 
     @GetMapping("/pageQueryUserList")
-    public ResVo<IPage<UserDO>> getUserPageList(@RequestParam("params") Map params){
+    public ResVo<IPage<Map>> getUserPageList(@RequestParam(required = false) Map params){
         return ResVo.ok(userService.getPageUserList(params));
     }
 }

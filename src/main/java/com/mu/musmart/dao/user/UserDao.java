@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public class UserDao extends ServiceImpl<UserMapper,UserDO> {
@@ -26,6 +27,10 @@ public class UserDao extends ServiceImpl<UserMapper,UserDO> {
 
     public UserDO getUserByUserAccount(String userAccount){
         return userMapper.selectOne(new QueryWrapper<UserDO>().eq("user_name",userAccount));
+    }
+
+    public IPage<Map> getUserPageList(Page<UserDO> page , Map params){
+        return userMapper.pageQueryUserList(page,params);
     }
 
 

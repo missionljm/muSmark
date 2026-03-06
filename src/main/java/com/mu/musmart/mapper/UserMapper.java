@@ -37,7 +37,7 @@ public interface UserMapper extends BaseMapper<UserDO> {
             "LEFT JOIN user_info ui ON u.id = ui.user_id " +
             "WHERE u.deleted = 0 " +
             "<if test='params.userName != null and params.userName != \"\"'>" +
-            "   AND u.user_name LIKE CONCAT('%', #{params.userName}, '%') " +
+            "   AND ui.user_name LIKE CONCAT('%', #{params.userName}, '%') " +
             "</if>" +
             "<if test='params.email != null and params.email != \"\"'>" +
             "   AND ui.email LIKE CONCAT('%', #{params.email}, '%') " +

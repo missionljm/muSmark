@@ -90,6 +90,10 @@ public class UserSessionHelper {
         RedisClient.del(token);
     }
 
+    public void verifySession(String session){
+        verifier.verify(session);
+    }
+
     /**
      * 通过session获取用户id
      * @param session

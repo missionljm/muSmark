@@ -3,6 +3,8 @@ package com.mu.musmart.domain.entity.user;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.mu.musmart.domain.entity.IpInfo;
 import com.mu.musmart.domain.entity.base.BaseDo;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -16,6 +18,9 @@ public class UserInfoDO extends BaseDo {
 
     @TableField("user_name")
     private String userName;
+
+    @TableField("user_id")
+    private Long userId;
 
     /**
      * 头像
@@ -70,5 +75,18 @@ public class UserInfoDO extends BaseDo {
      */
     @TableField("phone")
     private String phone;
+
+    /**
+     * ip信息
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private IpInfo ip;
+
+    public IpInfo getIp() {
+        if (ip == null) {
+            ip = new IpInfo();
+        }
+        return ip;
+    }
 
 }

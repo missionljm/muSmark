@@ -89,7 +89,7 @@ public class LoginFilter implements Filter {
                     req = reqSec;
                 }
                 filterChain.doFilter(req, servletResponse);
-            } catch (Exception e) {
+                } catch (Exception e) {
                 HttpServletResponse httpResponse = (HttpServletResponse) servletResponse;
                 httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500状态码
                 httpResponse.setContentType("application/json;charset=utf-8");

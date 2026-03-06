@@ -17,4 +17,8 @@ public interface UserService {
     List<Map> queryUserPermissionList(List<Map> userPermissionList ,Long userId ,  Integer level);
 
     IPage<Map> getPageUserList(Map params);
+
+    String addUser(Map userMap);
+
+    void updateUser(Map userMap);
 }

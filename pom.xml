@@ -160,6 +160,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- MinIO客户端依赖 -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.2</version>
+        </dependency>
+
     </dependencies>
 
     <profiles>
